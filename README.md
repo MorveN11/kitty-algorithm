@@ -10,11 +10,16 @@ I Choose LCS to define in the two paragraphs have misspellings, because we have 
   or more of their letters and these shared letters appear in the same order in both words.
   "These shared letters appear in the same order in both words" is the key to use LCS.
 
+I Choose LCS to get the longest common subsequence in the compare of the sentences of the
+paragraphs, and after that I use backtracking to get the misspelling words, because the order of
+the sentence is important to get the misspelling words, and the plagiarism percentage.
+
 **2. Identify the time complexity of your solution.***
 
-The time complexity of the solution to find the misspellings words is O(n * m), where n is the
-length of
-the first word and m is the length of the second word.
+* The time complexity of all the solution is O(n * m * p * q) where n is the size of the first
+  paragraph,
+  m is the size of the second paragraph, p is the average size of the first sentence and q is the
+  average size of the second sentence.
 
 ***Is there a non-dynamic programming solution? if so, please explain the idea and compare it
 with your solution***

@@ -16,7 +16,7 @@ public record Misspelling(String firstWord, String secondWord) {
    *
    * @return true if the second word is a possible misspelling of the first word, false otherwise.
    */
-  public boolean verifyPossibleMisspelling() {
+  public boolean isMisspelling() {
     if (this.firstWord.length() < this.secondWord.length()) {
       return false;
     }

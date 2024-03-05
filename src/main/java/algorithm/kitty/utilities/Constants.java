@@ -7,8 +7,6 @@ public class Constants {
 
   public static final int MISSPELLING_THRESHOLD = 55;
 
-  public static final int DEFAULT_COUNT = 1;
-
   public static final String DOT_SPLIT = "\\.";
 
   public static final String SPACE_SPLIT = " ";

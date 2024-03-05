@@ -12,30 +12,38 @@ class KittyTest {
 
   @Test
   void testPlagiarism() {
-    PlagiarismDetector exercise1 = new PlagiarismDetector("src/main/resources/exp-1-txt-1.txt",
-                                                          "src/main/resources/exp-1-txt-2.txt");
+    PlagiarismDetector firstExample = new PlagiarismDetector("src/main/resources/exp-1-txt-1.txt",
+                                                             "src/main/resources/exp-1-txt-2.txt");
     List<Misspelling> misspellings = new ArrayList<>(List.of(new Misspelling("printed",
                                                                              "printd"),
                                                              new Misspelling("information",
                                                                              "informaton")));
-    assertEquals(exercise1.getMaxPlagiarismPercentage(),
+    assertEquals(firstExample.getMaxPlagiarismPercentage(),
                  95.83000183105469);
-    assertEquals(exercise1.getMisspellings(),
+    assertEquals(firstExample.getMisspellings(),
                  misspellings);
-    PlagiarismDetector exercise2 = new PlagiarismDetector("src/main/resources/exp-2-txt-1.txt",
-                                                          "src/main/resources/exp-2-txt-2.txt");
+    PlagiarismDetector secondExample = new PlagiarismDetector("src/main/resources/exp-2-txt-1.txt",
+                                                              "src/main/resources/exp-2-txt-2.txt");
     misspellings = new ArrayList<>();
-    assertEquals(exercise2.getMaxPlagiarismPercentage(),
+    assertEquals(secondExample.getMaxPlagiarismPercentage(),
                  33.33000183105469);
-    assertEquals(exercise2.getMisspellings(),
+    assertEquals(secondExample.getMisspellings(),
                  misspellings);
-    PlagiarismDetector exercise3 = new PlagiarismDetector("src/main/resources/exp-3-txt-1.txt",
-                                                          "src/main/resources/exp-3-txt-2.txt");
+    PlagiarismDetector thirdExample = new PlagiarismDetector("src/main/resources/exp-3-txt-1.txt",
+                                                             "src/main/resources/exp-3-txt-2.txt");
     misspellings = new ArrayList<>(List.of(new Misspelling("Mathematics",
                                                            "matematicas")));
-    assertEquals(exercise3.getMaxPlagiarismPercentage(),
+    assertEquals(thirdExample.getMaxPlagiarismPercentage(),
                  80.00);
-    assertEquals(exercise3.getMisspellings(),
+    assertEquals(thirdExample.getMisspellings(),
+                 misspellings);
+    PlagiarismDetector fourthExample = new PlagiarismDetector("src/main/resources/exp-4-txt-1.txt",
+                                                              "src/main/resources/exp-4-txt-2.txt");
+    misspellings = new ArrayList<>(List.of(new Misspelling("Richard",
+                                                           "Richar")));
+    assertEquals(fourthExample.getMaxPlagiarismPercentage(),
+                 50.00);
+    assertEquals(fourthExample.getMisspellings(),
                  misspellings);
   }
 }

@@ -1,25 +1,22 @@
 package algorithm.kitty.plagiarism;
 
-import algorithm.kitty.plagiarism.classes.Count;
-import algorithm.kitty.plagiarism.classes.utilities.CountUtility;
+import algorithm.kitty.plagiarism.enums.Direction;
 import algorithm.kitty.plagiarism.paragraph.ParagraphConverter;
-import algorithm.kitty.plagiarism.paragraph.sentence.SentenceUtility;
 import algorithm.kitty.plagiarism.records.misspelling.Misspelling;
 import algorithm.kitty.plagiarism.records.plagiarism.Plagiarism;
 import algorithm.kitty.utilities.Constants;
 import algorithm.kitty.utilities.FileConverter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * PlagiarismDetector class that detects plagiarism between two paragraphs.
  */
 public class PlagiarismDetector {
 
-  private final List<Map<String, Count>> firstParagraph;
+  private final List<List<String>> firstParagraph;
 
-  private final List<Map<String, Count>> secondParagraph;
+  private final List<List<String>> secondParagraph;
 
   private List<Misspelling> misspellings = new ArrayList<>();
 
@@ -39,10 +36,6 @@ public class PlagiarismDetector {
     this.detectPlagiarism();
   }
 
-  private boolean invalidWordsCount(Count firstCount, Count secondCount) {
-    return firstCount.isCountZero() || secondCount.isCountZero();
-  }
-
   private float getPlagiarismPercentage(int matches, int size) {
     return (float) (matches * Constants.PERCENTAGE) / size;
   }
@@ -51,70 +44,110 @@ public class PlagiarismDetector {
     return Math.round(number * Constants.PERCENTAGE) / Constants.TWO_DIGIT_ROUND;
   }
 
+  private boolean checkEqualOrMisspellingWords(String firstWord, String secondWord) {
+    Misspelling misspelling = new Misspelling(firstWord,
+                                              secondWord);
+    return firstWord.equals(secondWord) || misspelling.isMisspelling();
+  }
+
   /**
-   * Compare the two sentences and detect plagiarism. Time complexity: O(n*m).
+   * This function returns the misspelling words of the LCS of this two sentences. Time complexity:
+   * O(min(n, m)) where n is the size of the first Sentence and m the size of the second Sentence.
+   *
+   * @param backtrack      the backtrack matrix.
+   * @param firstSentence  the first sentence.
+   * @param secondSentence the second sentence.
+   * @return the misspelling words of the LCS of this two sentences.
+   */
+  private List<Misspelling> getMisspellingWords(Direction[][] backtrack,
+                                                List<String> firstSentence,
+                                                List<String> secondSentence) {
+    List<Misspelling> misspellingWords = new ArrayList<>();
+    int firstSentenceIndex = firstSentence.size();
+    int secondSentenceIndex = secondSentence.size();
+    while (firstSentenceIndex > 0 && secondSentenceIndex > 0) {
+      if (backtrack[firstSentenceIndex][secondSentenceIndex] == Direction.DIAGONAL) {
+        String firstSentenceWord = firstSentence.get(firstSentenceIndex - 1);
+        String secondSentenceWord = secondSentence.get(secondSentenceIndex - 1);
+        firstSentenceIndex--;
+        secondSentenceIndex--;
+        if (!firstSentenceWord.equalsIgnoreCase(secondSentenceWord)) {
+          Misspelling misspelling = new Misspelling(firstSentenceWord,
+                                                    secondSentenceWord);
+          misspellingWords.add(0,
+                               misspelling);
+        }
+      } else if (backtrack[firstSentenceIndex][secondSentenceIndex] == Direction.UP) {
+        firstSentenceIndex--;
+      } else {
+        secondSentenceIndex--;
+      }
+    }
+    return misspellingWords;
+  }
+
+  /**
+   * Compare the two sentences and returns the total matches of the two Sentences and also all the
+   * misspelling words of those. Time complexity: O(n*m) where n is the size of the first sentence
+   * and m the size of the second sentence.
    *
    * @param firstSentence  the first sentence.
    * @param secondSentence the second sentence.
    * @return the plagiarism between the two sentences.
    */
-  private Plagiarism compareSentences(Map<String, Count> firstSentence,
-                                      Map<String, Count> secondSentence) {
-    int wordsMatched = Constants.DEFAULT_MATCHES;
-    List<Misspelling> tmpMisspellings = new ArrayList<>();
-    for (Map.Entry<String, Count> fistParagraphSentenceEntry : firstSentence.entrySet()) {
-      String firstParagraphWord = fistParagraphSentenceEntry.getKey();
-      Count firstParagraphWordCount = fistParagraphSentenceEntry.getValue();
-      for (Map.Entry<String, Count> secondParagraphSentenceEntry : secondSentence.entrySet()) {
-        String secondParagraphWord = secondParagraphSentenceEntry.getKey();
-        Count secondParagraphCount = secondParagraphSentenceEntry.getValue();
-        if (this.invalidWordsCount(firstParagraphWordCount,
-                                   secondParagraphCount)) {
-          continue;
+  private Plagiarism compareSentences(List<String> firstSentence, List<String> secondSentence) {
+    int firstSentenceSize = firstSentence.size();
+    int secondSentenceSize = secondSentence.size();
+    int[][] dp = new int[firstSentenceSize + 1][secondSentenceSize + 1];
+    Direction[][] backtrack = new Direction[firstSentenceSize + 1][secondSentenceSize + 1];
+    for (int i = 1; i <= firstSentenceSize; i++) {
+      for (int j = 1; j <= secondSentenceSize; j++) {
+        if (dp[i - 1][j] >= dp[i][j - 1]) {
+          dp[i][j] = dp[i - 1][j];
+          backtrack[i][j] = Direction.UP;
+        } else {
+          dp[i][j] = dp[i][j - 1];
+          backtrack[i][j] = Direction.LEFT;
         }
-        if (firstParagraphWord.equalsIgnoreCase(secondParagraphWord)) {
-          int diff = CountUtility.getMinCount(firstParagraphWordCount,
-                                              secondParagraphCount);
-          wordsMatched += diff;
-          continue;
+        String firstSentenceWord = firstSentence.get(i - 1).toLowerCase();
+        String secondSentenceWord = secondSentence.get(j - 1).toLowerCase();
+        if (checkEqualOrMisspellingWords(firstSentenceWord,
+                                         secondSentenceWord)) {
+          dp[i][j] = Math.max(dp[i][j],
+                              dp[i - 1][j - 1] + 1);
+          backtrack[i][j] = Direction.DIAGONAL;
         }
-        Misspelling misspelling = new Misspelling(firstParagraphWord,
-                                                  secondParagraphWord);
-        if (!misspelling.verifyPossibleMisspelling()) {
-          continue;
-        }
-        tmpMisspellings.add(misspelling);
-        int diff = CountUtility.getMinCount(firstParagraphWordCount,
-                                            secondParagraphCount);
-        wordsMatched += diff;
       }
     }
-    return new Plagiarism(wordsMatched,
-                          tmpMisspellings);
+    int longestCommonSubsequence = dp[firstSentenceSize][secondSentenceSize];
+    List<Misspelling> misspellingWords = getMisspellingWords(backtrack,
+                                                             firstSentence,
+                                                             secondSentence);
+    return new Plagiarism(longestCommonSubsequence,
+                          misspellingWords);
   }
 
   /**
-   * Detect plagiarism between the two paragraphs. Time complexity: O(n*m). Where n is the size of
-   * the first paragraph and m is the size of the second paragraph.
+   * This function detect the plagiarism of two paragraphs. Time Complexity: O(n*m*p*q) Where n is
+   * the size of the first paragraph, m is the size of the second paragraph, p is the average size
+   * of the first sentence and q is the average size of the second sentence.
    */
   private void detectPlagiarism() {
     int totalMatches = Constants.DEFAULT_MATCHES;
     int totalSecondParagraphSize = Constants.DEFAULT_SIZE;
     List<Misspelling> paragraphMisspellings = new ArrayList<>();
-    for (Map<String, Count> secondParagraphSentence : this.secondParagraph) {
+    for (List<String> secondParagraphSentence : this.secondParagraph) {
       int maxMatches = Constants.DEFAULT_MATCHES;
-      int sentenceSize = SentenceUtility.getSentenceSize(secondParagraphSentence);
+      int sentenceSize = secondParagraphSentence.size();
       List<Misspelling> sentenceMisspellings = new ArrayList<>();
-      for (Map<String, Count> firstParagraphSentence : this.firstParagraph) {
+      for (List<String> firstParagraphSentence : this.firstParagraph) {
         Plagiarism plagiarism = compareSentences(firstParagraphSentence,
                                                  secondParagraphSentence);
-        maxMatches = Math.max(maxMatches,
-                              plagiarism.wordsMatched());
-        if (maxMatches == plagiarism.wordsMatched()) {
+        if (plagiarism.wordsMatched() > maxMatches) {
           sentenceMisspellings = new ArrayList<>(plagiarism.misspellings());
         }
-        SentenceUtility.resetSentence(firstParagraphSentence);
-        SentenceUtility.resetSentence(secondParagraphSentence);
+        maxMatches = Math.max(maxMatches,
+                              plagiarism.wordsMatched());
       }
       totalMatches += maxMatches;
       totalSecondParagraphSize += sentenceSize;
